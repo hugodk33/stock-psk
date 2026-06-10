@@ -1,60 +1,47 @@
-import {
-  integer,
-  text,
-  sqliteTable,
-} from "drizzle-orm/sqlite-core";
+import { pgTable, text, timestamp, integer, primaryKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-/**
- * Users table — Autenticação e controle de acesso
- */
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   phone: text("phone"),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(), // bcrypt hash
+  password: text("password").notNull(),
   role: text("role", { enum: ["ADMIN", "MANAGER", "WORKER"] })
     .notNull()
     .default("WORKER"),
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+  createdAt: timestamp("createdAt", { mode: "date" })
     .notNull()
-    .default(sql`(cast(unixepoch('now') * 1000 as integer))`),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .default(sql`now()`),
+  updatedAt: timestamp("updatedAt", { mode: "date" })
     .notNull()
-    .default(sql`(cast(unixepoch('now') * 1000 as integer))`),
+    .default(sql`now()`),
 });
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-/**
- * Items table — Itens de manutenção no armazém
- */
-export const items = sqliteTable("items", {
+export const items = pgTable("items", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
-  imageUrl: text("imageUrl"), // URL do S3
+  imageUrl: text("imageUrl"),
   category: text("category").notNull(),
   subcategory: text("subcategory").notNull(),
   quantity: integer("quantity").notNull().default(0),
   minQuantity: integer("minQuantity").notNull().default(5),
-  location: text("location").notNull(), // Ex: "A-12", "Corredor B"
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+  location: text("location").notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" })
     .notNull()
-    .default(sql`(cast(unixepoch('now') * 1000 as integer))`),
-  updatedAt: integer("updatedAt", { mode: "timestamp_ms" })
+    .default(sql`now()`),
+  updatedAt: timestamp("updatedAt", { mode: "date" })
     .notNull()
-    .default(sql`(cast(unixepoch('now') * 1000 as integer))`),
+    .default(sql`now()`),
 });
 
 export type Item = typeof items.$inferSelect;
 export type InsertItem = typeof items.$inferInsert;
 
-/**
- * Logs table — Histórico de ações do sistema
- */
-export const logs = sqliteTable("logs", {
+export const logs = pgTable("logs", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text("userId")
     .notNull()
@@ -73,10 +60,10 @@ export const logs = sqliteTable("logs", {
   }).notNull(),
   description: text("description").notNull(),
   itemId: text("itemId").references(() => items.id),
-  metadata: text("metadata"), // JSON string
-  createdAt: integer("createdAt", { mode: "timestamp_ms" })
+  metadata: text("metadata"),
+  createdAt: timestamp("createdAt", { mode: "date" })
     .notNull()
-    .default(sql`(cast(unixepoch('now') * 1000 as integer))`),
+    .default(sql`now()`),
 });
 
 export type Log = typeof logs.$inferSelect;
