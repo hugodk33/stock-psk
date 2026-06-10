@@ -1,3 +1,4 @@
+import Header from "@/components/Header";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
@@ -64,8 +65,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <Header />
+      <div className="max-w-7xl mx-auto p-8">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <div>

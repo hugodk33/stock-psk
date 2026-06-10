@@ -5,6 +5,23 @@ import { loginUser, registerUser } from "./auth";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
 
+const RECAPTCHA_SECRET = process.env.SECRET_KEY_RECAPTCHA;
+
+async function verifyRecaptcha(token: string): Promise<boolean> {
+  if (!RECAPTCHA_SECRET) return true;
+  try {
+    const res = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ secret: RECAPTCHA_SECRET, response: token }),
+    });
+    const data = await res.json();
+    return data.success === true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Router de Autenticação
  */
@@ -17,10 +34,17 @@ const authRouter = router({
       z.object({
         username: z.string().min(1),
         password: z.string().min(1),
+        recaptchaToken: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
       try {
+        if (input.recaptchaToken) {
+          const valid = await verifyRecaptcha(input.recaptchaToken);
+          if (!valid) {
+            throw new Error("reCAPTCHA inválido");
+          }
+        }
         const result = await loginUser(input.username, input.password);
         return result;
       } catch (error: any) {

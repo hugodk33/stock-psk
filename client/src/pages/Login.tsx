@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import ReCAPTCHA from "react-google-recaptcha";
+import logoFull from "@/assets/logo-full.78474cf02e1ffab05103.png";
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
 
 export default function Login() {
   const [, navigate] = useLocation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const loginMutation = trpc.auth.login.useMutation();
 
@@ -29,32 +35,29 @@ export default function Login() {
       const result = await loginMutation.mutateAsync({
         username,
         password,
+        recaptchaToken: recaptchaToken ?? undefined,
       });
 
-      // Armazena o token no localStorage
       localStorage.setItem("auth_token", result.token);
 
-      // Redireciona para o dashboard
       navigate("/dashboard");
       toast.success("Login realizado com sucesso!");
     } catch (error: any) {
       toast.error(error.message || "Falha no login");
     } finally {
       setIsLoading(false);
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">
-            Estoque
-          </h1>
-          <p className="text-slate-600">
-            Sistema de Gerenciamento de Itens de Manutenção
-          </p>
+        {/* Header com logo */}
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <img src={logoFull} alt="Logo" className="h-10 w-auto" />
+          <span className="text-2xl font-bold text-slate-900">Gestão de Estoque</span>
         </div>
 
         {/* Login Card */}
@@ -89,6 +92,17 @@ export default function Login() {
                 className="w-full"
               />
             </div>
+
+            {/* reCAPTCHA */}
+            {RECAPTCHA_SITE_KEY && (
+              <div className="flex justify-center">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={(token) => setRecaptchaToken(token)}
+                />
+              </div>
+            )}
 
             {/* Submit Button */}
             <Button

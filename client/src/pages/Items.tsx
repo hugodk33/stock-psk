@@ -1,3 +1,4 @@
+import Header from "@/components/Header";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -57,8 +58,9 @@ export default function Items() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <Header />
+      <div className="max-w-7xl mx-auto p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -149,10 +151,22 @@ export default function Items() {
                       Quantidade
                     </th>
                   )}
+                  {user?.role !== "WORKER" && (
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">
+                      Mínimo
+                    </th>
+                  )}
+                  {user?.role !== "WORKER" && (
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">
+                      Status
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {filteredItems.map((item: any) => (
+                {filteredItems.map((item: any) => {
+                  const isLowStock = item.quantity <= item.minQuantity;
+                  return (
                   <tr
                     key={item.id}
                     className="hover:bg-slate-50 transition-colors cursor-pointer"
@@ -172,8 +186,27 @@ export default function Items() {
                         {item.quantity}
                       </td>
                     )}
+                    {user?.role !== "WORKER" && (
+                      <td className="px-6 py-4 text-sm text-slate-600 text-center">
+                        {item.minQuantity}
+                      </td>
+                    )}
+                    {user?.role !== "WORKER" && (
+                      <td className="px-6 py-4 text-center">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            isLowStock
+                              ? "bg-red-100 text-red-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {isLowStock ? "Baixo" : "Normal"}
+                        </span>
+                      </td>
+                    )}
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
