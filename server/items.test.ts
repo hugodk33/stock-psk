@@ -142,55 +142,6 @@ describe("Logs Router", () => {
   });
 });
 
-describe("Routes Router", () => {
-  it("should list routes", async () => {
-    const ctx = createMockContext();
-    const caller = appRouter.createCaller(ctx);
-
-    const routes = await caller.routes.list();
-    expect(Array.isArray(routes)).toBe(true);
-  });
-
-  it("should create route with MANAGER role", async () => {
-    const ctx = createMockContext("MANAGER");
-    const caller = appRouter.createCaller(ctx);
-
-    const now = new Date();
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
-    const route = await caller.routes.create({
-      name: "Test Route",
-      scheduledDate: tomorrow.getTime(),
-      userIds: [],
-      items: [],
-    });
-
-    expect(route).toBeDefined();
-    expect(route.name).toBe("Test Route");
-    expect(route.status).toBe("PENDING");
-  });
-
-  it("should not allow WORKER to create routes", async () => {
-    const ctx = createMockContext("WORKER");
-    const caller = appRouter.createCaller(ctx);
-
-    const now = new Date();
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
-    try {
-      await caller.routes.create({
-        name: "Test Route",
-        scheduledDate: tomorrow.getTime(),
-        userIds: [],
-        items: [],
-      });
-      expect.fail("Should have thrown an error");
-    } catch (error: any) {
-      expect(error.code).toBe("FORBIDDEN");
-    }
-  });
-});
-
 describe("Users Router", () => {
   it("should list users with ADMIN role", async () => {
     const ctx = createMockContext("ADMIN");

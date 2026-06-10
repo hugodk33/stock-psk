@@ -32,48 +32,16 @@ CREATE TABLE IF NOT EXISTS items (
   updatedAt INTEGER NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS routes (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  scheduledDate INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'PENDING',
-  createdBy TEXT NOT NULL,
-  createdAt INTEGER NOT NULL,
-  updatedAt INTEGER NOT NULL,
-  FOREIGN KEY (createdBy) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS routeItems (
-  id TEXT PRIMARY KEY,
-  routeId TEXT NOT NULL,
-  itemId TEXT NOT NULL,
-  quantity INTEGER NOT NULL,
-  PRIMARY KEY (routeId, itemId),
-  FOREIGN KEY (routeId) REFERENCES routes(id) ON DELETE CASCADE,
-  FOREIGN KEY (itemId) REFERENCES items(id)
-);
-
-CREATE TABLE IF NOT EXISTS routeUsers (
-  id TEXT PRIMARY KEY,
-  routeId TEXT NOT NULL,
-  userId TEXT NOT NULL,
-  PRIMARY KEY (routeId, userId),
-  FOREIGN KEY (routeId) REFERENCES routes(id) ON DELETE CASCADE,
-  FOREIGN KEY (userId) REFERENCES users(id)
-);
-
 CREATE TABLE IF NOT EXISTS logs (
   id TEXT PRIMARY KEY,
   userId TEXT NOT NULL,
   action TEXT NOT NULL,
   description TEXT NOT NULL,
   itemId TEXT,
-  routeId TEXT,
   metadata TEXT,
   createdAt INTEGER NOT NULL,
   FOREIGN KEY (userId) REFERENCES users(id),
-  FOREIGN KEY (itemId) REFERENCES items(id),
-  FOREIGN KEY (routeId) REFERENCES routes(id)
+  FOREIGN KEY (itemId) REFERENCES items(id)
 );
 `;
 

@@ -4,13 +4,9 @@ import Database from "better-sqlite3";
 import {
   users,
   items,
-  routes,
-  routeItems,
-  routeUsers,
   logs,
   type InsertUser,
   type InsertItem,
-  type InsertRoute,
   type InsertLog,
 } from "../drizzle/schema";
 
@@ -183,118 +179,6 @@ export async function updateItemQuantity(id: string, quantity: number) {
 }
 
 /**
- * Cria uma nova rota
- */
-export async function createRoute(route: InsertRoute) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  const result = await db.insert(routes).values(route).returning();
-  return result[0];
-}
-
-/**
- * Lista todas as rotas
- */
-export async function listRoutes() {
-  const db = await getDb();
-  if (!db) return [];
-
-  return await db.select().from(routes);
-}
-
-/**
- * Busca rota por ID
- */
-export async function getRouteById(id: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-
-  const result = await db
-    .select()
-    .from(routes)
-    .where(eq(routes.id, id))
-    .limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
-}
-
-/**
- * Atualiza status de uma rota
- */
-export async function updateRouteStatus(
-  id: string,
-  status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
-) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  const result = await db
-    .update(routes)
-    .set({ status, updatedAt: new Date() })
-    .where(eq(routes.id, id))
-    .returning();
-
-  return result[0];
-}
-
-/**
- * Adiciona item a uma rota
- */
-export async function addItemToRoute(routeId: string, itemId: string, quantity: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  const result = await db
-    .insert(routeItems)
-    .values({ routeId, itemId, quantity })
-    .returning();
-
-  return result[0];
-}
-
-/**
- * Lista itens de uma rota
- */
-export async function getRouteItems(routeId: string) {
-  const db = await getDb();
-  if (!db) return [];
-
-  return await db
-    .select()
-    .from(routeItems)
-    .where(eq(routeItems.routeId, routeId));
-}
-
-/**
- * Adiciona usuário a uma rota
- */
-export async function addUserToRoute(routeId: string, userId: string) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  const result = await db
-    .insert(routeUsers)
-    .values({ routeId, userId })
-    .returning();
-
-  return result[0];
-}
-
-/**
- * Lista usuários de uma rota
- */
-export async function getRouteUsers(routeId: string) {
-  const db = await getDb();
-  if (!db) return [];
-
-  return await db
-    .select()
-    .from(routeUsers)
-    .where(eq(routeUsers.routeId, routeId));
-}
-
-/**
  * Cria um novo log
  */
 export async function createLog(log: InsertLog) {
@@ -312,7 +196,6 @@ export async function listLogs(filters?: {
   userId?: string;
   action?: string;
   itemId?: string;
-  routeId?: string;
   limit?: number;
   offset?: number;
 }) {
@@ -322,7 +205,6 @@ export async function listLogs(filters?: {
   const conditions = [];
   if (filters?.userId) conditions.push(eq(logs.userId, filters.userId));
   if (filters?.itemId) conditions.push(eq(logs.itemId, filters.itemId));
-  if (filters?.routeId) conditions.push(eq(logs.routeId, filters.routeId));
 
   let query = db.select().from(logs);
 

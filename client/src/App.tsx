@@ -6,7 +6,6 @@ import Dashboard from "@/pages/Dashboard";
 import Items from "@/pages/Items";
 import ItemDetail from "@/pages/ItemDetail";
 import ItemForm from "@/pages/ItemForm";
-import Routes from "@/pages/Routes";
 import Admin from "@/pages/Admin";
 import UserForm from "@/pages/UserForm";
 import { Route, Switch } from "wouter";
@@ -22,7 +21,6 @@ function Router() {
       <Route path={"/items/new"} component={ItemForm} />
       <Route path={"/items/:id/edit"} component={ItemForm} />
       <Route path={"/items/:id"} component={ItemDetail} />
-      <Route path={"/routes"} component={Routes} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/admin/users/new"} component={UserForm} />
       <Route path={"/"} component={Dashboard} />

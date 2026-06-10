@@ -3,6 +3,16 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Minus } from "lucide-react";
@@ -13,6 +23,8 @@ export default function ItemDetail({ params }: any) {
   const [, navigate] = useLocation();
   const itemId = params.id;
   const [quantity, setQuantity] = useState(1);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"add" | "remove" | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -105,38 +117,38 @@ export default function ItemDetail({ params }: any) {
                 </div>
               </Card>
 
-              {/* Status do Estoque */}
-              <Card className="p-6 border-0 shadow-sm">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">
-                  Status do Estoque
-                </h2>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-slate-600 font-medium">Quantidade</p>
-                    <p className="text-3xl font-bold text-slate-900 mt-1">
-                      {item.quantity}
-                    </p>
+{user?.role !== "WORKER" && (
+                <Card className="p-6 border-0 shadow-sm">
+                  <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                    Status do Estoque
+                  </h2>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-slate-600 font-medium">Quantidade</p>
+                      <p className="text-3xl font-bold text-slate-900 mt-1">
+                        {item.quantity}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-600 font-medium">Mínimo</p>
+                      <p className="text-slate-900 mt-1">{item.minQuantity}</p>
+                    </div>
+                    <div>
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                          isLowStock
+                            ? "bg-red-100 text-red-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {isLowStock ? "Estoque Baixo" : "Estoque Normal"}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-slate-600 font-medium">Mínimo</p>
-                    <p className="text-slate-900 mt-1">{item.minQuantity}</p>
-                  </div>
-                  <div>
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                        isLowStock
-                          ? "bg-red-100 text-red-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {isLowStock ? "Estoque Baixo" : "Estoque Normal"}
-                    </span>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+)}
             </div>
 
-            {/* Movimentações */}
             <Card className="p-6 border-0 shadow-sm mb-8">
               <h2 className="text-lg font-semibold text-slate-900 mb-4">
                 Movimentações Avulsas
@@ -155,26 +167,24 @@ export default function ItemDetail({ params }: any) {
                   />
                 </div>
                 <div className="flex gap-2 items-end">
+                  {user?.role !== "WORKER" && (
+                    <Button
+                      onClick={() => {
+                        setConfirmAction("add");
+                        setConfirmOpen(true);
+                      }}
+                      disabled={addStockMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Entrada
+                    </Button>
+                  )}
                   <Button
-                    onClick={() =>
-                      addStockMutation.mutate({
-                        itemId,
-                        quantity,
-                      })
-                    }
-                    disabled={addStockMutation.isPending}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Entrada
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      removeStockMutation.mutate({
-                        itemId,
-                        quantity,
-                      })
-                    }
+                    onClick={() => {
+                      setConfirmAction("remove");
+                      setConfirmOpen(true);
+                    }}
                     disabled={removeStockMutation.isPending}
                     className="bg-red-600 hover:bg-red-700 text-white"
                   >
@@ -184,6 +194,36 @@ export default function ItemDetail({ params }: any) {
                 </div>
               </div>
             </Card>
+
+            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {confirmAction === "add" ? "Confirmar Entrada" : "Confirmar Saída"}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {confirmAction === "add"
+                      ? `Adicionar ${quantity} unidade(s) de "${item?.name}" ao estoque?`
+                      : `Despachar ${quantity} unidade(s) de "${item?.name}" do estoque?`}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      if (confirmAction === "add") {
+                        addStockMutation.mutate({ itemId, quantity });
+                      } else if (confirmAction === "remove") {
+                        removeStockMutation.mutate({ itemId, quantity });
+                      }
+                    }}
+                    className={confirmAction === "add" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
+                  >
+                    {confirmAction === "add" ? "Confirmar Entrada" : "Confirmar Saída"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {/* Histórico de Movimentações */}
             <Card className="border-0 shadow-sm">

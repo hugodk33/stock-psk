@@ -5,14 +5,20 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { Plus, Search, Edit2, Trash2 } from "lucide-react";
+import { Plus, Search, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Items() {
-  const { user, loading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
+  const { user, loading: authLoading, logout } = useAuth({ redirectOnUnauthenticated: true });
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    logout();
+    navigate("/login");
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -63,15 +69,25 @@ export default function Items() {
               Gerencie todos os itens do seu estoque
             </p>
           </div>
-          {user?.role !== "WORKER" && (
+          <div className="flex items-center gap-2">
+            {user?.role !== "WORKER" && (
+              <Button
+                onClick={() => navigate("/items/new")}
+                className="bg-slate-900 hover:bg-slate-800 text-white"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Item
+              </Button>
+            )}
             <Button
-              onClick={() => navigate("/items/new")}
-              className="bg-slate-900 hover:bg-slate-800 text-white"
+              onClick={handleLogout}
+              variant="outline"
+              className="flex items-center gap-2 text-slate-600"
             >
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Item
+              <LogOut className="h-4 w-4" />
+              Sair
             </Button>
-          )}
+          </div>
         </div>
 
         {/* Filtros */}
@@ -128,87 +144,36 @@ export default function Items() {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
                     Localização
                   </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">
-                    Quantidade
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">
-                    Mínimo
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">
-                    Ações
-                  </th>
+                  {user?.role !== "WORKER" && (
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">
+                      Quantidade
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {filteredItems.map((item: any) => {
-                  const isLowStock = item.quantity <= item.minQuantity;
-                  return (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-slate-50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/items/${item.id}`)}
-                    >
-                      <td className="px-6 py-4 text-sm text-slate-900 font-medium">
-                        {item.name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
-                        {item.category}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
-                        {item.location}
-                      </td>
+                {filteredItems.map((item: any) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-slate-50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/items/${item.id}`)}
+                  >
+                    <td className="px-6 py-4 text-sm text-slate-900 font-medium">
+                      {item.name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      {item.category}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      {item.location}
+                    </td>
+                    {user?.role !== "WORKER" && (
                       <td className="px-6 py-4 text-sm text-slate-900 text-center font-medium">
                         {item.quantity}
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 text-center">
-                        {item.minQuantity}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            isLowStock
-                              ? "bg-red-100 text-red-800"
-                              : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {isLowStock ? "Baixo" : "Normal"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          {user?.role !== "WORKER" && (
-                            <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/items/${item.id}/edit`);
-                    }}
-                    className="text-slate-600 hover:text-slate-900"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDelete(item.id);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                    )}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

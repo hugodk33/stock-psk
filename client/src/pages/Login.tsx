@@ -108,7 +108,7 @@ export default function Login() {
           </form>
 
           {/* Demo Info */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          {/* <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-xs text-blue-900 font-medium mb-1">
               Credenciais de Demonstração:
             </p>
@@ -118,12 +118,12 @@ export default function Login() {
             <p className="text-xs text-blue-800">
               Senha: <span className="font-mono">admin123</span>
             </p>
-          </div>
+          </div> */}
         </Card>
 
         {/* Footer */}
         <p className="text-center text-xs text-slate-500 mt-6">
-          Sistema de Estoque © 2026
+          KERO MAIS , controle de Estoque © {new Date().getFullYear()}
         </p>
       </div>
     </div>

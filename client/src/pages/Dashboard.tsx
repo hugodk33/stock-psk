@@ -3,13 +3,19 @@ import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Package, AlertCircle, Route, Users } from "lucide-react";
+import { Package, AlertCircle, Users, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
 
 export default function Dashboard() {
-  const { user, loading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
+  const { user, loading: authLoading, logout } = useAuth({ redirectOnUnauthenticated: true });
   const [, navigate] = useLocation();
+
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    logout();
+    navigate("/login");
+  };
 
   // Redireciona para login se não autenticado
   useEffect(() => {
@@ -18,11 +24,14 @@ export default function Dashboard() {
     }
   }, [authLoading, user, navigate]);
 
-  const itemsQuery = trpc.items.list.useQuery(undefined, {
-    enabled: !!user,
-  });
+  // Redireciona WORKER para /items
+  useEffect(() => {
+    if (!authLoading && user?.role === "WORKER") {
+      navigate("/items");
+    }
+  }, [authLoading, user, navigate]);
 
-  const routesQuery = trpc.routes.list.useQuery(undefined, {
+  const itemsQuery = trpc.items.list.useQuery(undefined, {
     enabled: !!user,
   });
 
@@ -37,9 +46,6 @@ export default function Dashboard() {
   const totalItems = itemsQuery.data?.length || 0;
   const lowStockItems = itemsQuery.data?.filter(
     (item) => item.quantity <= item.minQuantity
-  ).length || 0;
-  const activeRoutes = routesQuery.data?.filter(
-    (route) => route.status === "PENDING" || route.status === "IN_PROGRESS"
   ).length || 0;
 
   if (authLoading) {
@@ -61,13 +67,23 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">
-            Dashboard
-          </h1>
-          <p className="text-slate-600">
-            Bem-vindo, <span className="font-semibold">{user?.name}</span>
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">
+              Dashboard
+            </h1>
+            <p className="text-slate-600">
+              Bem-vindo, <span className="font-semibold">{user?.name}</span>
+            </p>
+          </div>
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="flex items-center gap-2 text-slate-600"
+          >
+            <LogOut className="h-4 w-4" />
+            Sair
+          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -106,25 +122,6 @@ export default function Dashboard() {
               </div>
               <div className="p-3 bg-amber-100 rounded-lg">
                 <AlertCircle className="h-6 w-6 text-amber-600" />
-              </div>
-            </div>
-          </Card>
-
-          {/* Rotas Ativas */}
-          <Card className="p-6 border-0 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-600 font-medium">Rotas Ativas</p>
-                <p className="text-3xl font-bold text-slate-900 mt-2">
-                  {routesQuery.isLoading ? (
-                    <Skeleton className="h-10 w-16" />
-                  ) : (
-                    activeRoutes
-                  )}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <Route className="h-6 w-6 text-green-600" />
               </div>
             </div>
           </Card>
@@ -187,18 +184,12 @@ export default function Dashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <Button
             onClick={() => navigate("/items")}
             className="h-12 bg-slate-900 hover:bg-slate-800 text-white font-medium"
           >
             Gerenciar Itens
-          </Button>
-          <Button
-            onClick={() => navigate("/routes")}
-            className="h-12 bg-slate-900 hover:bg-slate-800 text-white font-medium"
-          >
-            Gerenciar Rotas
           </Button>
           {user?.role === "ADMIN" && (
             <Button
