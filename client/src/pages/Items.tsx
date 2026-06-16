@@ -138,7 +138,7 @@ export default function Items() {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
-                    Nome
+                    Item
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
                     Categoria
@@ -173,7 +173,16 @@ export default function Items() {
                     onClick={() => navigate(`/items/${item.id}`)}
                   >
                     <td className="px-6 py-4 text-sm text-slate-900 font-medium">
-                      {item.name}
+                      <div className="flex items-center gap-3">
+                        {item.imageUrl && (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-10 h-10 object-cover rounded border border-slate-200"
+                          />
+                        )}
+                        {item.name}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
                       {item.category}

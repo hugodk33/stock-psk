@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ItemDetail({ params }: any) {
@@ -92,6 +92,16 @@ export default function ItemDetail({ params }: any) {
               Detalhes e movimentações do item
             </p>
           </div>
+          {user?.role !== "WORKER" && (
+            <Button
+              onClick={() => navigate(`/items/${itemId}/edit`)}
+              variant="outline"
+              className="ml-auto"
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar
+            </Button>
+          )}
         </div>
 
         {/* Item Info */}
@@ -100,21 +110,34 @@ export default function ItemDetail({ params }: any) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {/* Informações Básicas */}
               <Card className="p-6 border-0 shadow-sm md:col-span-2">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">
-                  Informações Básicas
-                </h2>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-slate-600 font-medium">Categoria</p>
-                    <p className="text-slate-900 mt-1">{item.category}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-600 font-medium">Subcategoria</p>
-                    <p className="text-slate-900 mt-1">{item.subcategory}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-600 font-medium">Localização</p>
-                    <p className="text-slate-900 mt-1">{item.location}</p>
+                <div className="flex gap-6">
+                  {item.imageUrl && (
+                    <div className="shrink-0">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-40 h-40 object-cover rounded-lg border border-slate-200"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h2 className="text-lg font-semibold text-slate-900 mb-4">
+                      Informações Básicas
+                    </h2>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-sm text-slate-600 font-medium">Categoria</p>
+                        <p className="text-slate-900 mt-1">{item.category}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600 font-medium">Subcategoria</p>
+                        <p className="text-slate-900 mt-1">{item.subcategory}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600 font-medium">Localização</p>
+                        <p className="text-slate-900 mt-1">{item.location}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Card>

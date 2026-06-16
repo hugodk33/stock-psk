@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
-import { useState, useEffect } from "react";
-import { ArrowLeft } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ArrowLeft, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ItemForm({ params }: any) {
@@ -13,6 +13,8 @@ export default function ItemForm({ params }: any) {
   const [, navigate] = useLocation();
   const itemId = params?.id;
   const isEdit = !!itemId && itemId !== "new";
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -21,6 +23,7 @@ export default function ItemForm({ params }: any) {
     quantity: 0,
     minQuantity: 5,
     location: "",
+    imageUrl: "",
   });
 
   useEffect(() => {
@@ -67,9 +70,37 @@ export default function ItemForm({ params }: any) {
         quantity: itemQuery.data.quantity,
         minQuantity: itemQuery.data.minQuantity,
         location: itemQuery.data.location,
+        imageUrl: itemQuery.data.imageUrl || "",
       });
     }
   }, [isEdit, itemQuery.data]);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const data = await res.json();
+      if (data.url) {
+        setFormData((prev) => ({ ...prev, imageUrl: data.url }));
+        toast.success("Imagem enviada");
+      } else {
+        toast.error("Erro ao enviar imagem");
+      }
+    } catch {
+      toast.error("Erro ao enviar imagem");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData((prev) => ({ ...prev, imageUrl: "" }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +113,12 @@ export default function ItemForm({ params }: any) {
     if (isEdit) {
       updateItemMutation.mutate({
         id: itemId,
-        ...formData,
+        name: formData.name,
+        category: formData.category,
+        subcategory: formData.subcategory,
+        minQuantity: formData.minQuantity,
+        location: formData.location,
+        imageUrl: formData.imageUrl || undefined,
       });
     } else {
       createItemMutation.mutate(formData);
@@ -214,6 +250,46 @@ export default function ItemForm({ params }: any) {
                   }
                 />
               </div>
+            </div>
+
+            {/* Imagem */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Imagem do Item
+              </label>
+              {formData.imageUrl ? (
+                <div className="relative inline-block">
+                  <img
+                    src={formData.imageUrl}
+                    alt="Preview"
+                    className="w-48 h-48 object-cover rounded-lg border border-slate-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-48 h-48 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-slate-500 transition-colors"
+                >
+                  <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                  <p className="text-sm text-slate-500">
+                    {uploading ? "Enviando..." : "Clique para selecionar"}
+                  </p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleUpload}
+                className="hidden"
+              />
             </div>
 
             {/* Buttons */}
