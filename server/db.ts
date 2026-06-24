@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import {
@@ -152,23 +152,51 @@ export async function createLog(log: InsertLog) {
   return result[0];
 }
 
+export type LogWithUser = {
+  id: string;
+  userId: string;
+  userName: string | null;
+  action: string;
+  description: string;
+  itemId: string | null;
+  metadata: string | null;
+  createdAt: Date;
+};
+
 export async function listLogs(filters?: {
   userId?: string;
   action?: string;
   itemId?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
   limit?: number;
   offset?: number;
-}) {
+}): Promise<LogWithUser[]> {
   const db = await getDb();
   if (!db) return [];
   const conditions = [];
   if (filters?.userId) conditions.push(eq(logs.userId, filters.userId));
   if (filters?.itemId) conditions.push(eq(logs.itemId, filters.itemId));
-  let query = db.select().from(logs);
-  if (conditions.length > 0) {
-    query = query.where(and(...conditions)) as any;
-  }
-  const result = await (query as any)
+  if (filters?.dateFrom) conditions.push(gte(logs.createdAt, filters.dateFrom));
+  if (filters?.dateTo) conditions.push(lte(logs.createdAt, filters.dateTo));
+
+  const query = db
+    .select({
+      id: logs.id,
+      userId: logs.userId,
+      userName: users.name,
+      action: logs.action,
+      description: logs.description,
+      itemId: logs.itemId,
+      metadata: logs.metadata,
+      createdAt: logs.createdAt,
+    })
+    .from(logs)
+    .leftJoin(users, eq(logs.userId, users.id));
+
+  const filtered = conditions.length > 0 ? query.where(and(...conditions)) : query;
+
+  const result = await (filtered as any)
     .orderBy(logs.createdAt)
     .limit(filters?.limit || 100)
     .offset(filters?.offset || 0);

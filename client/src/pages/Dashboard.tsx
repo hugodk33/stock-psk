@@ -169,6 +169,7 @@ export default function Dashboard() {
                       </p>
                       <p className="text-xs text-slate-500 mt-1">
                         {new Date(log.createdAt).toLocaleString("pt-BR")}
+                        {log.userName && <span className="font-semibold"> — por {log.userName}</span>}
                       </p>
                     </div>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
@@ -186,12 +187,18 @@ export default function Dashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           <Button
             onClick={() => navigate("/items")}
             className="h-12 bg-slate-900 hover:bg-slate-800 text-white font-medium"
           >
             Gerenciar Itens
+          </Button>
+          <Button
+            onClick={() => navigate("/reports")}
+            className="h-12 bg-slate-900 hover:bg-slate-800 text-white font-medium"
+          >
+            Relatório Diário
           </Button>
           {user?.role === "ADMIN" && (
             <Button

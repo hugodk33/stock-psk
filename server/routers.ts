@@ -405,16 +405,24 @@ const logsRouter = router({
         userId: z.string().optional(),
         action: z.string().optional(),
         itemId: z.string().optional(),
+        dateFrom: z.string().optional(),
+        dateTo: z.string().optional(),
         limit: z.number().int().min(1).max(1000).optional(),
         offset: z.number().int().min(0).optional(),
       })
     )
     .query(async ({ input, ctx }) => {
       // Workers só podem ver seus próprios logs
-      const filters = {
+      const filters: Record<string, any> = {
         ...input,
         userId: ctx.user!.role === "WORKER" ? ctx.user!.id : input.userId,
       };
+      if (filters.dateFrom) filters.dateFrom = new Date(filters.dateFrom);
+      if (filters.dateTo) {
+        const end = new Date(filters.dateTo);
+        end.setHours(23, 59, 59, 999);
+        filters.dateTo = end;
+      }
 
       return await db.listLogs(filters);
     }),
