@@ -1,4 +1,4 @@
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import {
@@ -180,25 +180,36 @@ export async function listLogs(filters?: {
   if (filters?.dateFrom) conditions.push(gte(logs.createdAt, filters.dateFrom));
   if (filters?.dateTo) conditions.push(lte(logs.createdAt, filters.dateTo));
 
-  const query = db
-    .select({
-      id: logs.id,
-      userId: logs.userId,
-      userName: users.name,
-      action: logs.action,
-      description: logs.description,
-      itemId: logs.itemId,
-      metadata: logs.metadata,
-      createdAt: logs.createdAt,
-    })
-    .from(logs)
-    .leftJoin(users, eq(logs.userId, users.id));
-
+  const query = db.select().from(logs);
   const filtered = conditions.length > 0 ? query.where(and(...conditions)) : query;
 
   const result = await (filtered as any)
     .orderBy(logs.createdAt)
     .limit(filters?.limit || 100)
     .offset(filters?.offset || 0);
-  return result;
+
+  const seen: Record<string, boolean> = {};
+  const userIds: string[] = [];
+  for (const r of result) {
+    if (!seen[r.userId]) {
+      seen[r.userId] = true;
+      userIds.push(r.userId);
+    }
+  }
+  const userRows = userIds.length > 0
+    ? await db.select({ id: users.id, name: users.name }).from(users).where(or(...userIds.map((id) => eq(users.id, id))))
+    : [];
+
+  const nameMap = Object.fromEntries(userRows.map((u) => [u.id, u.name]));
+
+  return result.map((r: any) => ({
+    id: r.id,
+    userId: r.userId,
+    userName: nameMap[r.userId] || null,
+    action: r.action,
+    description: r.description,
+    itemId: r.itemId,
+    metadata: r.metadata,
+    createdAt: r.createdAt,
+  }));
 }

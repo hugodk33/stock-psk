@@ -91,10 +91,12 @@ export default function Reports() {
                     <div key={log.id} className="p-4 hover:bg-slate-50 transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
+                          {log.userName && (
+                            <p className="text-sm font-bold text-slate-900">[{log.userName}]</p>
+                          )}
                           <p className="text-sm font-medium text-slate-900">{log.description}</p>
                           <p className="text-xs text-slate-500 mt-1">
                             {new Date(log.createdAt).toLocaleTimeString("pt-BR")}
-                            {log.userName && <span className="font-semibold"> — {log.userName}</span>}
                           </p>
                         </div>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">

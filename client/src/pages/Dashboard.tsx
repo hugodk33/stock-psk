@@ -164,12 +164,14 @@ export default function Dashboard() {
                 <div key={log.id} className="p-4 hover:bg-slate-50 transition-colors">
                   <div className="flex items-start justify-between">
                     <div>
+                      {log.userName && (
+                        <p className="text-sm font-bold text-slate-900">[{log.userName}]</p>
+                      )}
                       <p className="text-sm font-medium text-slate-900">
                         {log.description}
                       </p>
                       <p className="text-xs text-slate-500 mt-1">
                         {new Date(log.createdAt).toLocaleString("pt-BR")}
-                        {log.userName && <span className="font-semibold"> — por {log.userName}</span>}
                       </p>
                     </div>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
