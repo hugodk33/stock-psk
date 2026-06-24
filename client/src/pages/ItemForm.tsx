@@ -15,13 +15,13 @@ export default function ItemForm({ params }: any) {
   const isEdit = !!itemId && itemId !== "new";
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [qtyStr, setQtyStr] = useState("0");
+  const [minQtyStr, setMinQtyStr] = useState("5");
 
   const [formData, setFormData] = useState({
     name: "",
     category: "",
     subcategory: "",
-    quantity: 0,
-    minQuantity: 5,
     location: "",
     imageUrl: "",
   });
@@ -67,11 +67,11 @@ export default function ItemForm({ params }: any) {
         name: itemQuery.data.name,
         category: itemQuery.data.category,
         subcategory: itemQuery.data.subcategory,
-        quantity: itemQuery.data.quantity,
-        minQuantity: itemQuery.data.minQuantity,
         location: itemQuery.data.location,
         imageUrl: itemQuery.data.imageUrl || "",
       });
+      setQtyStr(String(itemQuery.data.quantity));
+      setMinQtyStr(String(itemQuery.data.minQuantity));
     }
   }, [isEdit, itemQuery.data]);
 
@@ -116,12 +116,20 @@ export default function ItemForm({ params }: any) {
         name: formData.name,
         category: formData.category,
         subcategory: formData.subcategory,
-        minQuantity: formData.minQuantity,
+        minQuantity: parseInt(minQtyStr) || 5,
         location: formData.location,
         imageUrl: formData.imageUrl || undefined,
       });
     } else {
-      createItemMutation.mutate(formData);
+      createItemMutation.mutate({
+        name: formData.name,
+        category: formData.category,
+        subcategory: formData.subcategory,
+        quantity: parseInt(qtyStr) || 0,
+        minQuantity: parseInt(minQtyStr) || 5,
+        location: formData.location,
+        imageUrl: formData.imageUrl || undefined,
+      });
     }
   };
 
@@ -223,15 +231,11 @@ export default function ItemForm({ params }: any) {
                   Quantidade Inicial
                 </label>
                 <Input
-                  type="number"
-                  min="0"
-                  value={formData.quantity}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      quantity: parseInt(e.target.value) || 0,
-                    })
-                  }
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={qtyStr}
+                  onChange={(e) => setQtyStr(e.target.value.replace(/\D/g, ""))}
                 />
               </div>
               <div>
@@ -239,15 +243,11 @@ export default function ItemForm({ params }: any) {
                   Quantidade Mínima
                 </label>
                 <Input
-                  type="number"
-                  min="1"
-                  value={formData.minQuantity}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      minQuantity: parseInt(e.target.value) || 5,
-                    })
-                  }
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={minQtyStr}
+                  onChange={(e) => setMinQtyStr(e.target.value.replace(/\D/g, ""))}
                 />
               </div>
             </div>

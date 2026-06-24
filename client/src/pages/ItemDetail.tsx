@@ -23,7 +23,7 @@ export default function ItemDetail({ params }: any) {
   const { user, loading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
   const [, navigate] = useLocation();
   const itemId = params.id;
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState("1");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"add" | "remove" | null>(null);
 
@@ -48,7 +48,7 @@ export default function ItemDetail({ params }: any) {
       toast.success("Entrada registrada com sucesso");
       itemQuery.refetch();
       logsQuery.refetch();
-      setQuantity(1);
+      setQuantity("1");
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao registrar entrada");
@@ -60,7 +60,7 @@ export default function ItemDetail({ params }: any) {
       toast.success("Saída registrada com sucesso");
       itemQuery.refetch();
       logsQuery.refetch();
-      setQuantity(1);
+      setQuantity("1");
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao registrar saída");
@@ -184,10 +184,11 @@ export default function ItemDetail({ params }: any) {
                     Quantidade
                   </label>
                   <Input
-                    type="number"
-                    min="1"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                    onChange={(e) => setQuantity(e.target.value.replace(/\D/g, ""))}
                     className="w-full"
                   />
                 </div>
@@ -236,10 +237,11 @@ export default function ItemDetail({ params }: any) {
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
+                      const qty = parseInt(quantity) || 1;
                       if (confirmAction === "add") {
-                        addStockMutation.mutate({ itemId, quantity });
+                        addStockMutation.mutate({ itemId, quantity: qty });
                       } else if (confirmAction === "remove") {
-                        removeStockMutation.mutate({ itemId, quantity });
+                        removeStockMutation.mutate({ itemId, quantity: qty });
                       }
                     }}
                     className={confirmAction === "add" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
