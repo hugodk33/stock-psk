@@ -180,13 +180,12 @@ export async function listLogs(filters?: {
   if (filters?.dateFrom) conditions.push(gte(logs.createdAt, filters.dateFrom));
   if (filters?.dateTo) conditions.push(lte(logs.createdAt, filters.dateTo));
 
-  const query = db.select().from(logs);
-  const filtered = conditions.length > 0 ? query.where(and(...conditions)) : query;
+  let query: any = db.select().from(logs);
+  if (conditions.length > 0) query = query.where(and(...conditions));
+  query = query.orderBy(logs.createdAt).limit(filters?.limit || 100);
+  if (filters?.offset) query = query.offset(filters.offset);
 
-  const result = await (filtered as any)
-    .orderBy(logs.createdAt)
-    .limit(filters?.limit || 100)
-    .offset(filters?.offset || 0);
+  const result: any[] = await query;
 
   const seen: Record<string, boolean> = {};
   const userIds: string[] = [];

@@ -6,20 +6,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { Plus, Search, LogOut } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Items() {
-  const { user, loading: authLoading, logout } = useAuth({ redirectOnUnauthenticated: true });
+  const { user, loading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-
-  const handleLogout = () => {
-    localStorage.removeItem("auth_token");
-    logout();
-    navigate("/login");
-  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -81,14 +75,6 @@ export default function Items() {
                 Novo Item
               </Button>
             )}
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="flex items-center gap-2 text-slate-600"
-            >
-              <LogOut className="h-4 w-4" />
-              Sair
-            </Button>
           </div>
         </div>
 

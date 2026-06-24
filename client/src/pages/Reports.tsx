@@ -5,25 +5,55 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, Search } from "lucide-react";
 
 export default function Reports() {
   const { user, loading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
   const [, navigate] = useLocation();
-  const today = new Date().toISOString().split("T")[0];
-  const [dateFrom, setDateFrom] = useState(today);
-  const [dateTo, setDateTo] = useState(today);
+  const [formDateFrom, setFormDateFrom] = useState("");
+  const [formDateTo, setFormDateTo] = useState("");
+  const [formUserId, setFormUserId] = useState("");
+  const [formItemId, setFormItemId] = useState("");
+
+  const [queryDateFrom, setQueryDateFrom] = useState("");
+  const [queryDateTo, setQueryDateTo] = useState("");
+  const [queryUserId, setQueryUserId] = useState<string | undefined>();
+  const [queryItemId, setQueryItemId] = useState<string | undefined>();
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/login");
   }, [authLoading, user, navigate]);
 
+  const usersQuery = trpc.users.list.useQuery(undefined, {
+    enabled: !!user && user?.role === "ADMIN",
+  });
+
+  const itemsQuery = trpc.items.list.useQuery(undefined, {
+    enabled: !!user,
+  });
+
   const logsQuery = trpc.logs.list.useQuery(
-    { dateFrom, dateTo, limit: 1000 },
-    { enabled: !!user && !!dateFrom && !!dateTo }
+    {
+      dateFrom: queryDateFrom,
+      dateTo: queryDateTo,
+      userId: queryUserId,
+      itemId: queryItemId,
+      limit: 1000,
+    },
+    { enabled: !!user }
   );
 
+  const handleSearch = () => {
+    setQueryDateFrom(formDateFrom);
+    setQueryDateTo(formDateTo);
+    setQueryUserId(formUserId || undefined);
+    setQueryItemId(formItemId || undefined);
+  };
+
+
   const logs = logsQuery.data || [];
+  const users = usersQuery.data || [];
+  const items = itemsQuery.data || [];
 
   const handlePrint = () => window.print();
 
@@ -38,12 +68,12 @@ export default function Reports() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <Header />
       <div className="max-w-5xl mx-auto p-8">
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 mb-8 no-print">
           <Button variant="ghost" onClick={() => navigate("/dashboard")} className="p-2">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-4xl font-bold text-slate-900">Relatório Diário</h1>
+            <h1 className="text-4xl font-bold text-slate-900">Relatórios</h1>
             <p className="text-slate-600 mt-1">Movimentações do período</p>
           </div>
           <Button onClick={handlePrint} className="bg-slate-900 hover:bg-slate-800 text-white">
@@ -52,33 +82,75 @@ export default function Reports() {
           </Button>
         </div>
 
-        <Card className="p-6 border-0 shadow-sm mb-8">
-          <div className="flex gap-4 items-end">
+        <div className="print-only hidden mb-4">
+          <h2 className="text-2xl font-bold text-slate-900">Relatório de Movimentações</h2>
+          {queryDateFrom && queryDateTo && (
+            <p className="text-slate-600">
+              {new Date(queryDateFrom).toLocaleDateString("pt-BR")} — {new Date(queryDateTo).toLocaleDateString("pt-BR")}
+            </p>
+          )}
+        </div>
+
+        <Card className="p-6 border-0 shadow-sm mb-8 no-print">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Data Início</label>
               <input
                 type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                value={formDateFrom}
+                onChange={(e) => setFormDateFrom(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Data Fim</label>
               <input
                 type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                value={formDateTo}
+                onChange={(e) => setFormDateTo(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Usuário</label>
+              <select
+                value={formUserId}
+                onChange={(e) => setFormUserId(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+              >
+                <option value="">Todos</option>
+                {users.map((u: any) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Item</label>
+              <select
+                value={formItemId}
+                onChange={(e) => setFormItemId(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+              >
+                <option value="">Todos</option>
+                {items.map((item: any) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
+          <Button
+            onClick={handleSearch}
+            className="mt-4 bg-slate-900 hover:bg-slate-800 text-white"
+          >
+            <Search className="mr-2 h-4 w-4" />
+            Pesquisar
+          </Button>
         </Card>
 
         <Card className="border-0 shadow-sm">
           {logs.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-slate-500">Nenhuma movimentação no período</p>
+              <p className="text-slate-500">Nenhum relatório</p>
             </div>
           ) : (
             Object.entries(grouped).map(([date, dayLogs]) => (
@@ -113,10 +185,13 @@ export default function Reports() {
       </div>
 
       <style>{`
+        .print-only { display: none; }
         @media print {
           header, .no-print { display: none !important; }
+          .print-only { display: block !important; }
           body { background: white !important; }
           .min-h-screen { padding: 0 !important; }
+          .max-w-5xl { max-width: 100% !important; padding: 0 !important; }
         }
       `}</style>
     </div>

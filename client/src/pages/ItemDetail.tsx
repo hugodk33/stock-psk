@@ -252,43 +252,45 @@ export default function ItemDetail({ params }: any) {
               </AlertDialogContent>
             </AlertDialog>
 
-            {/* Histórico de Movimentações */}
-            <Card className="border-0 shadow-sm">
-              <div className="p-6 border-b border-slate-200">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Histórico de Movimentações
-                </h2>
-              </div>
+            {user?.role !== "WORKER" && (
+              /* Histórico de Movimentações */
+              <Card className="border-0 shadow-sm">
+                <div className="p-6 border-b border-slate-200">
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    Histórico de Movimentações
+                  </h2>
+                </div>
 
-              <div className="divide-y divide-slate-200">
-                {logs.length > 0 ? (
-                  logs.map((log: any) => (
-                    <div key={log.id} className="p-4 hover:bg-slate-50 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          {log.userName && (
-                            <p className="text-sm font-bold text-slate-900">[{log.userName}]</p>
-                          )}
-                          <p className="text-sm font-medium text-slate-900">
-                            {log.description}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-1">
-                            {new Date(log.createdAt).toLocaleString("pt-BR")}
-                          </p>
+                <div className="divide-y divide-slate-200">
+                  {logs.length > 0 ? (
+                    logs.map((log: any) => (
+                      <div key={log.id} className="p-4 hover:bg-slate-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            {log.userName && (
+                              <p className="text-sm font-bold text-slate-900">[{log.userName}]</p>
+                            )}
+                            <p className="text-sm font-medium text-slate-900">
+                              {log.description}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {new Date(log.createdAt).toLocaleString("pt-BR")}
+                            </p>
+                          </div>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                            {log.action}
+                          </span>
                         </div>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                          {log.action}
-                        </span>
                       </div>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center">
+                      <p className="text-slate-500">Nenhuma movimentação registrada</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="p-8 text-center">
-                    <p className="text-slate-500">Nenhuma movimentação registrada</p>
-                  </div>
-                )}
-              </div>
-            </Card>
+                  )}
+                </div>
+              </Card>
+            )}
           </>
         )}
       </div>
