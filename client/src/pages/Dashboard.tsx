@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Package, AlertCircle, Users } from "lucide-react";
 import { useLocation } from "wouter";
@@ -127,6 +128,41 @@ export default function Dashboard() {
             </div>
           </Card>
         </div>
+
+        {/* Itens com Estoque Baixo */}
+        {itemsQuery.data && lowStockItems > 0 && (
+          <Card className="border-0 shadow-sm mb-8">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+                Itens com Estoque Baixo
+              </h2>
+              <span className="text-sm text-slate-500">{lowStockItems} item(ns)</span>
+            </div>
+            <div className="divide-y divide-slate-200">
+              {itemsQuery.data
+                .filter((item) => item.quantity <= item.minQuantity)
+                .map((item: any) => (
+                  <div key={item.id} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-slate-900">{item.name}</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {item.quantity}/{item.minQuantity} — {item.location}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/items/${item.id}`)}
+                      className="shrink-0"
+                    >
+                      Ver item
+                    </Button>
+                  </div>
+                ))}
+            </div>
+          </Card>
+        )}
 
         {/* Movimentações Recentes */}
         <Card className="border-0 shadow-sm">
