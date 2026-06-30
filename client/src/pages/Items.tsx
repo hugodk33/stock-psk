@@ -4,9 +4,10 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { QRCodeCanvas } from "qrcode.react";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Scan, QrCode } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Items() {
@@ -14,12 +15,42 @@ export default function Items() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [qrViewItem, setQrViewItem] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/login");
     }
   }, [authLoading, user, navigate]);
+
+  const handleScan = async () => {
+    setScannerOpen(true);
+    const { Html5Qrcode } = await import("html5-qrcode");
+    const scanner = new Html5Qrcode("qr-reader");
+    scanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText: string) => {
+        const match = decodedText.match(/\/items\/([^/]+)$/);
+        if (match) {
+          scanner.stop().catch(() => {});
+          setScannerOpen(false);
+          navigate(`/items/${match[1]}`);
+        } else {
+          toast.error("QR Code inválido");
+        }
+      },
+      () => {}
+    ).catch(() => {
+      toast.error("Erro ao acessar câmera");
+      setScannerOpen(false);
+    });
+  };
+
+  const closeScanner = () => {
+    setScannerOpen(false);
+  };
 
   const itemsQuery = trpc.items.list.useQuery(undefined, {
     enabled: !!user,
@@ -66,6 +97,14 @@ export default function Items() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={handleScan}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Scan className="h-4 w-4" />
+              Escanear QR Code
+            </Button>
             {user?.role !== "WORKER" && (
               <Button
                 onClick={() => navigate("/items/new")}
@@ -147,6 +186,9 @@ export default function Items() {
                       Status
                     </th>
                   )}
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">
+                    QR
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -199,6 +241,16 @@ export default function Items() {
                         </span>
                       </td>
                     )}
+                    <td className="px-6 py-4 text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); setQrViewItem(item.id); }}
+                        className="text-slate-400 hover:text-slate-900"
+                      >
+                        <QrCode className="h-4 w-4" />
+                      </Button>
+                    </td>
                   </tr>
                   );
                 })}
@@ -212,6 +264,34 @@ export default function Items() {
             </div>
           )}
         </Card>
+
+        {qrViewItem && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center" onClick={() => setQrViewItem(null)}>
+            <div className="bg-white rounded-xl p-6 max-w-xs w-full mx-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-slate-900">QR Code</h2>
+                <Button variant="ghost" size="sm" onClick={() => setQrViewItem(null)}>Fechar</Button>
+              </div>
+              <div className="flex justify-center">
+                {typeof window !== "undefined" && (
+                  <QRCodeCanvas value={`${window.location.origin}/items/${qrViewItem}`} size={200} />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {scannerOpen && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-slate-900">Escanear QR Code</h2>
+                <Button variant="ghost" size="sm" onClick={closeScanner}>Fechar</Button>
+              </div>
+              <div id="qr-reader" className="w-full" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

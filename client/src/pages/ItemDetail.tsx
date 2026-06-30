@@ -17,6 +17,7 @@ import {
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Minus, Pencil } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 
 export default function ItemDetail({ params }: any) {
@@ -171,7 +172,19 @@ export default function ItemDetail({ params }: any) {
                     </div>
                   </div>
                 </Card>
-)}
+            )}
+
+            {/* QR Code */}
+            <Card className="p-6 border-0 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4 text-center">
+                QR Code
+              </h2>
+              <div className="flex justify-center">
+                {typeof window !== "undefined" && (
+                  <QRCodeCanvas value={`${window.location.origin}/items/${item.id}`} size={160} />
+                )}
+              </div>
+            </Card>
             </div>
 
             <Card className="p-6 border-0 shadow-sm mb-8">
